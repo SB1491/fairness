@@ -1504,7 +1504,7 @@ Lemma lock_and_unlock'''
             let i := SCMem.val_nat 0 in 
             _ <- ITree.iter                
                     (fun (i: SCMem.val) =>
-                      let i' := SCMem.val_add i 1 in 
+                      let i := SCMem.val_add i 1 in 
                       let x := i in 
                       b <- OMod.call "compare" (x: SCMem.val, SCMem.val_nat n);;
                       if (b:bool) then Ret (inr x) else Ret (inl x)
@@ -1553,6 +1553,18 @@ Lemma lock_and_unlock'''
   
     rewrite unfold_iter_eq. rred. 
     iApply compare. des_ifs. 
+    {
+      contradict Heq.
+      assert ( true ≠ false) by ( ss ).
+      assert ( (n + 1) ≠ n). { induction n. ss. ss. auto. }
+      apply Nat.eqb_neq in H0.
+      rewrite H0. ss.
+    }
+    rred. iApply stsim_tauR. 
+    iStopProof. pattern n. 
+    apply (well_founded_induction Ord.lt_well_founded).
+
+
     { apply Nat.eqb_eq in Heq. rred.  
     
       iPoseProof ("K" with "[POINTS_TO]") as "> H".
@@ -1569,8 +1581,6 @@ Lemma lock_and_unlock'''
       }
       iFrame.
     }
-    contradict Heq.
-    rewrite <- beq_nat_refl.
-    ss.
+
 Qed.
 
