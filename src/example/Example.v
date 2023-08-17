@@ -1551,19 +1551,27 @@ Lemma lock_and_unlock'''
     iPoseProof (inv_open with "PROTECT EXCL") as "> [POINTS_TO K]".
     iDestruct "POINTS_TO" as "[%v POINTS_TO]".
   
+    iStopProof. revert tid. pattern n. revert n.
+    apply (well_founded_induction Ord.lt_well_founded). intros n IH. intros.
+    iIntros "[# PROTECT [SIM [TAX [OWN [AUTH [WHI [DUTY [POINTS_TO A]]]]]]]]".
     rewrite unfold_iter_eq. rred. 
+
+
     iApply compare. des_ifs. 
     {
       contradict Heq.
       assert ( true ≠ false) by ( ss ).
-      assert ( (n + 1) ≠ n). { induction n. ss. ss. auto. }
+
+      assert ( (n0 + 1) ≠ n0)%nat. { induction n0. ss. ss. auto. }
       apply Nat.eqb_neq in H0.
       rewrite H0. ss.
     }
     rred. iApply stsim_tauR. 
     iStopProof. pattern n. 
     apply (well_founded_induction Ord.lt_well_founded).
-
+    {
+      
+    }
 
     { apply Nat.eqb_eq in Heq. rred.  
     
