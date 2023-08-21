@@ -1481,7 +1481,7 @@ Lemma lock_and_unlock'''
     (ObligationRA.duty inlp tid l))
     ∗
     (ObligationRA.taxes
-    l ((Ord.omega × Ord.omega) ⊕ 2)%ord
+    l ((((Ord.omega × Ord.omega) × Ord.omega) ⊕ ( (Ord.omega × Ord.omega ))) ⊕ 10)%ord
       )
         ∗
         (
@@ -1518,15 +1518,14 @@ Lemma lock_and_unlock'''
     rred.
 
     iPoseProof (ObligationRA.taxes_ord_split_one with "TAXES") as "TAXES".
-    { eapply Hessenberg.lt_add_r. apply OrdArith.lt_from_nat. instantiate (1:=1). auto. }
+    { eapply Hessenberg.lt_add_r. apply OrdArith.lt_from_nat. instantiate (1:=9). auto. }
     iMod "TAXES". iDestruct "TAXES" as "[TAXES TAX]".
     iPoseProof (ObligationRA.taxes_ord_split_one with "TAXES") as "TAXES".
-    { eapply Hessenberg.lt_add_r. apply OrdArith.lt_from_nat. instantiate (1:=0). auto. }
+    { eapply Hessenberg.lt_add_r. apply OrdArith.lt_from_nat. instantiate (1:=8). auto. }
   
     iMod "TAXES". iDestruct "TAXES" as "[TAXES TAX1]".
-    iPoseProof (ObligationRA.taxes_ord_mon with "TAXES") as "TAXES".
-    { instantiate (1:=(Ord.omega × Ord.omega)%ord). eapply Hessenberg.add_base_l. }
-    iMod "TAXES".
+    iPoseProof (ObligationRA.taxes_ord_split_eq with "TAXES") as "[TAXES2 TAXES1]".
+    iPoseProof (ObligationRA.taxes_ord_split_eq with "TAXES2") as "[TAXES3 TAXES]".
     iApply lock. 
     
   
@@ -1549,25 +1548,50 @@ Lemma lock_and_unlock'''
     iIntros "DUTY _". rred.
     iPoseProof (inv_open with "PROTECT EXCL") as "> [POINTS_TO K]".
     iDestruct "POINTS_TO" as "[%v POINTS_TO]".
+
+    induction n.
+
+
+    {
+      Search ITree.iter.
+      iApply compare. 
+    }
+    iApply compare.
   
-    iStopProof. revert tid. pattern n. revert n.
+    iStopProof. revert tid. pattern n. induction n. 
+    {
+      iIntros "[# PROTECT ]".
+      iApply compare.
+    }
+    
+    revert n. induction n.
     apply (well_founded_induction Ord.lt_well_founded). intros n IH. intros.
-    iIntros "[# PROTECT [SIM [TAX [OWN [AUTH [WHI [DUTY [POINTS_TO A]]]]]]]]".
+    iIntros "[# PROTECT [SIM [TAX [TAXES1 [TAXES2 [OWN [AUTH [WHI [DUTY [POINTS_TO A]]]]]]]]]]".
     rewrite unfold_iter_eq. rred.
-
-
 
     iApply compare.
 
     induction n0.
+    Admitted.
     {
-      des_ifs. rred. iApply unlock. iSplitR "SIM". 
-      { 
-        admit.   
+      
+      (*      des_ifs. rred. iApply unlock. iSplitR "SIM". 
+      {
+        iFrame.  iSplitL "DUTY AUTH WHI TAXES1".
+
+        iExists j. iFrame.  iApply ObligationRA.taxes_cons_fold.
+        iSplitL "WHI"; auto.  
       }
-      iFrame.
+      iFrame. *)
+
 
     }
+
+    
+
+    admit.
+    auto.
+
     
     
     
