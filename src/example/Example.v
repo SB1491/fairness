@@ -1501,14 +1501,13 @@ Lemma lock_and_unlock'''
           ((
             _ <- close_itree_lock;;
             _ <- trigger Yield;;
-            let i := SCMem.val_nat 0 in 
             _ <- ITree.iter                
                     (fun (i: SCMem.val) =>
                       let i := SCMem.val_add i 1 in 
                       let x := i in 
-                      b <- OMod.call "compare" (x: SCMem.val, SCMem.val_nat n);;
+                      b <- OMod.call "compare" (x: SCMem.val, SCMem.val_nat (S n));;
                       if (b:bool) then Ret (inr x) else Ret (inl x)
-                    ) (SCMem.val_nat n)
+                    ) (SCMem.val_nat 0)
                   ;; 
             close_itree_unlock
             ) >>= tgt)
@@ -1554,10 +1553,27 @@ Lemma lock_and_unlock'''
     iStopProof. revert tid. pattern n. revert n.
     apply (well_founded_induction Ord.lt_well_founded). intros n IH. intros.
     iIntros "[# PROTECT [SIM [TAX [OWN [AUTH [WHI [DUTY [POINTS_TO A]]]]]]]]".
-    rewrite unfold_iter_eq. rred. 
+    rewrite unfold_iter_eq. rred.
 
 
-    iApply compare. des_ifs. 
+
+    iApply compare.
+
+    induction n0.
+    {
+      des_ifs. rred. iApply unlock. iSplitR "SIM". 
+      { 
+        admit.   
+      }
+      iFrame.
+
+    }
+    
+    
+    
+    
+    
+    des_ifs. 
     {
       contradict Heq.
       assert ( true ≠ false) by ( ss ).
@@ -1566,7 +1582,9 @@ Lemma lock_and_unlock'''
       apply Nat.eqb_neq in H0.
       rewrite H0. ss.
     }
-    rred. iApply stsim_tauR. 
+
+    rred. iApply stsim_tauR.
+    rewrite unfold_iter_eq.  
     iStopProof. pattern n. 
     apply (well_founded_induction Ord.lt_well_founded).
     {
