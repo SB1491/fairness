@@ -1463,6 +1463,30 @@ Lemma lock_and_unlock'''
   iPoseProof ("SIM" with "[OWN DUTY]") as "SIM".
   { iFrame. } iFrame.
   Qed.
+  
+  Lemma unfold_while 
+      n :
+      _ <- ITree.iter 
+      (fun (i: SCMem.val) =>
+        let i := SCMem.val_add i 1 in 
+        let x := i in 
+        b <- OMod.call "compare" (x: SCMem.val, SCMem.val_nat (S n));;
+        if (b:bool) then Ret (inr x) else Ret (inl x)
+      ) (SCMem.val_nat 0)
+    ;; 
+    close_itree_unlock
+  =
+      _ <- ITree.iter                
+      (fun (i: SCMem.val) =>
+        let i := SCMem.val_add i 1 in 
+        let x := i in 
+        b <- OMod.call "compare" (x: SCMem.val, SCMem.val_nat (n));;
+        if (b:bool) then Ret (inr x) else Ret (inl x)
+      ) (SCMem.val_nat 0)
+    ;; 
+    close_itree_unlock
+    .
+    Admitted.
 
   Lemma while_loop
     R_src R_tgt tid
@@ -1548,14 +1572,37 @@ Lemma lock_and_unlock'''
     iIntros "DUTY _". rred.
     iPoseProof (inv_open with "PROTECT EXCL") as "> [POINTS_TO K]".
     iDestruct "POINTS_TO" as "[%v POINTS_TO]".
-
+    
+    iPoseProof ("K" with "[POINTS_TO]") as "> H".  { iExists _. iFrame. }
     induction n.
 
 
     {
-      Search ITree.iter.
-      iApply compare. 
+      rewrite unfold_iter_eq.
+      rred. iApply compare. des_ifs.
+      rred. iApply unlock.
+      iSplitR "SIM". 
+      { iSplitL "OWN". iFrame.  iSplitL "DUTY LOCK WHI2 TAX1".  
+      iExists j. iFrame.  iApply ObligationRA.taxes_cons_fold.
+      iSplitL "WHI2"; auto.
+      iApply ObligationRA.white_eq.  2: iFrame.
+          rewrite Jacobsthal.mult_1_l.  reflexivity.
+          iApply ObligationRA.tax_is_single_taxes. iFrame. iFrame.
+       }
+      iIntros "[OWN DUTY]".
+      iPoseProof ("SIM" with "[OWN DUTY]") as "SIM".
+      { iFrame. } iFrame.
     }
+
+    
+    rewrite unfold_while.
+
+    rewrite unfold_iter_eq.
+    rred. iApply compare. des_ifs.
+    rred. iApply stsim_tauR.
+    
+
+
     iApply compare.
   
     iStopProof. revert tid. pattern n. induction n. 
