@@ -1466,25 +1466,17 @@ Lemma lock_and_unlock'''
   
   Lemma unfold_while 
       n :
-      _ <- ITree.iter 
-      (fun (i: SCMem.val) =>
-        let i := SCMem.val_add i 1 in 
-        let x := i in 
-        b <- OMod.call "compare" (x: SCMem.val, SCMem.val_nat (S n));;
-        if (b:bool) then Ret (inr x) else Ret (inl x)
-      ) (SCMem.val_nat 0)
-    ;; 
-    close_itree_unlock
+      (ITree.iter
+      (λ i : SCMem.val,
+         ` b : bool <- OMod.call "compare" (SCMem.val_add i 1, SCMem.val_nat (S (S n)));;
+         (if b then Ret (inr (SCMem.val_add i 1)) else Ret (inl (SCMem.val_add i 1))))
+      (SCMem.val_nat 0);;; close_itree_unlock)
   =
-      _ <- ITree.iter                
-      (fun (i: SCMem.val) =>
-        let i := SCMem.val_add i 1 in 
-        let x := i in 
-        b <- OMod.call "compare" (x: SCMem.val, SCMem.val_nat (n));;
-        if (b:bool) then Ret (inr x) else Ret (inl x)
-      ) (SCMem.val_nat 0)
-    ;; 
-    close_itree_unlock
+  (ITree.iter
+  (λ i : SCMem.val,
+     ` b : bool <- OMod.call "compare" (SCMem.val_add i 1, SCMem.val_nat ((S n)));;
+     (if b then Ret (inr (SCMem.val_add i 1)) else Ret (inl (SCMem.val_add i 1))))
+  (SCMem.val_nat 0);;;  close_itree_unlock)
     .
     Admitted.
 
@@ -1595,89 +1587,8 @@ Lemma lock_and_unlock'''
     }
 
     
-    rewrite unfold_while.
 
-    rewrite unfold_iter_eq.
-    rred. iApply compare. des_ifs.
-    rred. iApply stsim_tauR.
-    
-
-
-    iApply compare.
-  
-    iStopProof. revert tid. pattern n. induction n. 
-    {
-      iIntros "[# PROTECT ]".
-      iApply compare.
-    }
-    
-    revert n. induction n.
-    apply (well_founded_induction Ord.lt_well_founded). intros n IH. intros.
-    iIntros "[# PROTECT [SIM [TAX [TAXES1 [TAXES2 [OWN [AUTH [WHI [DUTY [POINTS_TO A]]]]]]]]]]".
-    rewrite unfold_iter_eq. rred.
-
-    iApply compare.
-
-    induction n0.
     Admitted.
-    {
-      
-      (*      des_ifs. rred. iApply unlock. iSplitR "SIM". 
-      {
-        iFrame.  iSplitL "DUTY AUTH WHI TAXES1".
 
-        iExists j. iFrame.  iApply ObligationRA.taxes_cons_fold.
-        iSplitL "WHI"; auto.  
-      }
-      iFrame. *)
-
-
-    }
 
     
-
-    admit.
-    auto.
-
-    
-    
-    
-    
-    
-    des_ifs. 
-    {
-      contradict Heq.
-      assert ( true ≠ false) by ( ss ).
-
-      assert ( (n0 + 1) ≠ n0)%nat. { induction n0. ss. ss. auto. }
-      apply Nat.eqb_neq in H0.
-      rewrite H0. ss.
-    }
-
-    rred. iApply stsim_tauR.
-    rewrite unfold_iter_eq.  
-    iStopProof. pattern n. 
-    apply (well_founded_induction Ord.lt_well_founded).
-    {
-      
-    }
-
-    { apply Nat.eqb_eq in Heq. rred.  
-    
-      iPoseProof ("K" with "[POINTS_TO]") as "> H".
-      { iExists _. iFrame. }
-      iApply unlock. 
-      iSplitR "SIM". 
-      { 
-      iSplitL "OWN". iFrame.  iSplitL "DUTY LOCK WHI2 TAX1".  
-      iExists j. iFrame.  iApply ObligationRA.taxes_cons_fold.
-      iSplitL "WHI2"; auto.
-      iApply ObligationRA.white_eq.  2: iFrame.
-      rewrite Jacobsthal.mult_1_l.  reflexivity.
-      iApply ObligationRA.tax_is_single_taxes. iFrame. iFrame.    
-      }
-      iFrame.
-    }
-
-Qed.
-
